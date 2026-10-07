@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hastings Area Schools – True Cost of Health Insurance Calculator</title>
+<style>
+  :root{
+    --purple:#4b2a84; --purple-d:#3a2068; --teal:#2bb5a0; --teal-d:#1a8f7d; --rx:#d9731f; --coin:#e0b400; --hsa:#27ae60;
+    --ink:#23203a; --muted:#6a6783; --line:#e4e1ef; --bg:#f4f3f9; --card:#fff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.45}
+  header{background:var(--purple);color:#fff;padding:28px 20px 70px}
+  .wrap{max-width:1120px;margin:0 auto}
+  header h1{margin:0 0 6px;font-size:28px;font-weight:700;letter-spacing:.2px}
+  header p{margin:0;opacity:.9;font-size:16px;max-width:780px}
+  header .badge{display:inline-block;background:var(--teal);color:#06352d;font-weight:700;font-size:12px;letter-spacing:.8px;text-transform:uppercase;padding:4px 10px;border-radius:99px;margin-bottom:10px}
+  main{margin-top:-46px;padding:0 20px 40px}
+  .panel{background:var(--card);border-radius:14px;box-shadow:0 4px 18px rgba(40,25,80,.10);padding:22px 24px;margin-bottom:20px}
+  .step{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .step .num{background:var(--teal);color:#fff;font-weight:700;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:14px;flex:none}
+  .step h2{margin:0;font-size:18px}
+  select{font:inherit;font-size:17px;padding:10px 14px;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);min-width:280px;max-width:100%}
+  select:focus,input[type=range]:focus-visible,summary:focus-visible,button:focus-visible{outline:3px solid #b9a6e8;outline-offset:2px}
+  .hint{color:var(--muted);font-size:14px;margin-top:8px}
+  .spread{margin-top:14px;display:none}
+  .spread label{font-size:14px;color:var(--muted);display:block;margin-bottom:4px}
+  .spread select{font-size:15px;padding:8px 12px;min-width:260px}
+
+  .sliders{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+  @media(max-width:860px){.sliders{grid-template-columns:1fr}}
+  .sl{border:2px solid var(--line);border-radius:12px;padding:14px 16px 12px}
+  .sl h3{margin:0 0 2px;font-size:15px;text-transform:uppercase;letter-spacing:.6px}
+  .sl.med h3{color:var(--purple)} .sl.rx h3{color:var(--rx)}
+  .sl .sub{font-size:13px;color:var(--muted);margin-bottom:6px}
+  .slider-top{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;margin:6px 0 4px}
+  .level-name{font-size:22px;font-weight:700}
+  .med .level-name{color:var(--purple)} .rx .level-name{color:var(--rx)}
+  .level-desc{color:var(--muted);font-size:14px;min-height:42px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:12px;border-radius:99px;outline:none;margin:8px 0 6px}
+  #needMed{background:linear-gradient(90deg,#9be0d4 0%,#2bb5a0 35%,#8a63c7 70%,#4b2a84 100%)}
+  #needRx{background:linear-gradient(90deg,#ffe0b8 0%,#f5a65b 40%,#e0731f 70%,#a4440c 100%)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;background:#fff;border:5px solid var(--purple);cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:5px solid var(--purple);cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  #needRx::-webkit-slider-thumb{border-color:var(--rx)}
+  #needRx::-moz-range-thumb{border-color:var(--rx)}
+  .ticks{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);text-align:center}
+  .ticks span{flex:1}
+  .ticks span:first-child{text-align:left}.ticks span:last-child{text-align:right}
+  .usage{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .chip{border-radius:99px;padding:4px 11px;font-size:13px}
+  .med .chip{background:#f1eefa;color:var(--purple-d)} .rx .chip{background:#fdf0e3;color:#8a3f06}
+
+  .summary{font-size:16px;margin:0 0 4px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0 12px}
+  .legend span{display:inline-flex;align-items:center}
+  .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+
+  /* ranked plan list */
+  .plan{border:2px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;transition:border-color .2s, box-shadow .2s}
+  .plan.best{border-color:var(--teal);box-shadow:0 0 0 3px rgba(43,181,160,.16)}
+  .plan summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:34px minmax(170px,1.1fr) minmax(200px,2.4fr) 118px;gap:14px;align-items:center;padding:12px 14px}
+  .plan summary::-webkit-details-marker{display:none}
+  @media(max-width:760px){.plan summary{grid-template-columns:30px 1fr 100px}.plan .barcol{grid-column:1 / -1;order:5}}
+  .rank{width:30px;height:30px;border-radius:50%;background:#efecf8;color:var(--purple-d);font-weight:800;display:grid;place-items:center;font-size:14px}
+  .best .rank{background:var(--teal);color:#06352d}
+  .pname{font-weight:700;font-size:16px;line-height:1.2}
+  .pname .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+  .pmeta{font-size:12.5px;color:var(--muted)}
+  .tag{display:inline-block;background:var(--teal);color:#06352d;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:1px 8px;border-radius:99px;margin-left:6px;vertical-align:1px}
+  .bar{display:flex;height:16px;border-radius:99px;overflow:hidden;background:var(--line)}
+  .bar i{display:block;height:100%;transition:width .25s}
+  .bar .p{background:var(--purple)}.bar .m{background:var(--teal)}.bar .c{background:var(--coin)}.bar .r{background:var(--rx)}
+  .bar.hsabar{height:6px;margin-top:4px;background:transparent}
+  .bar.hsabar .h{background:var(--hsa)}
+  .barnote{font-size:12px;color:var(--muted);margin-top:3px}
+  .tot{text-align:right}
+  .tot b{font-size:22px;display:block;line-height:1.1}
+  .tot span{font-size:12px;color:var(--muted)}
+  .neg{color:#0e7a5f}
+  .detail{display:grid;grid-template-columns:1fr 1fr;gap:6px 36px;border-top:1px solid var(--line);margin:0 14px;padding:12px 0 16px}
+  @media(max-width:760px){.detail{grid-template-columns:1fr}}
+  .row{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:3px 0}
+  .row .k{color:var(--muted)}
+  .row.sub{font-size:12.5px;padding:1px 0 1px 15px}
+  .row.sub .k{color:#8d8aa3}
+  .progress{margin:6px 0}
+  .progress .lbl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted)}
+  .progress .tr{height:7px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:3px}
+  .progress .tr i{display:block;height:100%;background:var(--teal-d);transition:width .25s}
+  .flag{margin-top:8px;font-size:12.5px;background:#fff4dc;color:#7a4b00;border-radius:8px;padding:5px 8px}
+  .flag.cap{background:#e8f6f3;color:#0e5b4e}
+  .rules{font-size:12.5px;color:var(--muted)}
+  .rules div{padding:1px 0}
+  .caret{font-size:12px;color:var(--purple);margin-top:2px}
+  details[open] .caret::after{content:"▲ Hide details"} details:not([open]) .caret::after{content:"▼ Show details"}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+  .pchip{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--line);background:#fff;border-radius:99px;padding:3px 11px 3px 8px;font-size:12.5px;color:var(--ink);cursor:pointer;font-family:inherit}
+  .pchip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .pchip.off{opacity:.45;background:#f6f5fa}
+  .pchip.off i{background:#c9c6d8 !important}
+  .linkbtn{border:0;background:none;color:var(--purple);font-weight:600;cursor:pointer;font-size:13px;padding:3px 6px;font-family:inherit}
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:860px){.charts{grid-template-columns:1fr}}
+  .charts h4{margin:0 0 4px;font-size:15px}
+  svg{width:100%;height:auto;display:block}
+  details.how summary{display:block;cursor:pointer;font-weight:600;color:var(--purple);padding:0}
+  details.how ul{color:var(--muted);font-size:14px;padding-left:20px}
+  details.how li{margin:4px 0}
+  .scroll{overflow-x:auto}
+  table.ref{border-collapse:collapse;font-size:13px;width:100%;margin:8px 0 4px;min-width:640px}
+  table.ref th,table.ref td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left}
+  .foot{font-size:12.5px;color:var(--muted);margin-top:14px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <span class="badge">WMHIP · Plan Year Effective 1/1/2027</span>
+    <h1>Hastings Area Schools — What Will My Health Plan Really Cost?</h1>
+    <p>Your true cost is more than the paycheck deduction. It’s your premium <b>plus</b> what you pay out of pocket for medical care and prescriptions. Pick your coverage level, set your expected medical and prescription needs separately, and compare all nine plans.</p>
+  </div>
+</header>
+
+<main><div class="wrap">
+
+  <section class="panel">
+    <div class="step"><span class="num">1</span><h2>Who is covered on your plan?</h2></div>
+    <label for="tier" class="hint" style="display:block;margin:0 0 6px">Coverage level</label>
+    <select id="tier" aria-label="Coverage level">
+      <option value="single">Single (1 person)</option>
+      <option value="two">Two-Person (2 people)</option>
+      <option value="family">Full Family (modeled as 4 people)</option>
+    </select>
+    <div class="spread" id="spreadBox">
+      <label for="spread">How will care be spread across your household?</label>
+      <select id="spread">
+        <option value="even">Evenly across everyone</option>
+        <option value="one">Mostly one person</option>
+      </select>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="step"><span class="num">2</span><h2>How much care do you expect to use this year?</h2></div>
+    <div class="sliders">
+      <div class="sl med">
+        <h3>Medical care</h3>
+        <div class="sub">Doctor visits, urgent care, ER, tests, surgery, hospital</div>
+        <div class="slider-top"><div class="level-name" id="medName">Light</div></div>
+        <div class="level-desc" id="medDesc"></div>
+        <input type="range" id="needMed" min="0" max="100" step="1" value="35" aria-label="Expected medical needs for the year">
+        <div class="ticks"><span>Checkups</span><span>Light</span><span>Moderate</span><span>Heavy</span><span>Major</span></div>
+        <div class="usage" id="usageMed"></div>
+      </div>
+      <div class="sl rx">
+        <h3>Prescription drugs (Rx)</h3>
+        <div class="sub">Generic, brand-name and specialty medications</div>
+        <div class="slider-top"><div class="level-name" id="rxName">Light</div></div>
+        <div class="level-desc" id="rxDesc"></div>
+        <input type="range" id="needRx" min="0" max="100" step="1" value="35" aria-label="Expected prescription needs for the year">
+        <div class="ticks"><span>None</span><span>Light</span><span>Moderate</span><span>Heavy</span><span>Specialty</span></div>
+        <div class="usage" id="usageRx"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="step"><span class="num">3</span><h2>Your estimated net cost for the year — lowest to highest</h2></div>
+    <p class="summary" id="summary"></p>
+    <div class="legend"><span><span class="sw" style="background:var(--purple)"></span>Your premium (payroll deductions)</span><span><span class="sw" style="background:var(--hsa)"></span>HSA deposit (shown as a negative)</span><span><span class="sw" style="background:var(--teal)"></span>Medical deductible &amp; copays</span><span><span class="sw" style="background:var(--coin)"></span>Medical coinsurance</span><span><span class="sw" style="background:var(--rx)"></span>Rx out-of-pocket</span></div>
+    <div id="plans"></div>
+    <div class="hint">Bars are drawn on one common scale so plans are easy to compare. Select any plan to see its full breakdown.</div>
+  </section>
+
+  <section class="panel">
+    <div class="step"><span class="num">4</span><h2>How total cost changes as your needs change</h2></div>
+    <div class="chips" id="chips"></div>
+    <div class="charts">
+      <div><h4>If your <span style="color:var(--purple)">medical</span> needs change <span style="font-weight:400;color:var(--muted)">(Rx held where you set it)</span></h4><div id="chartMed"></div></div>
+      <div><h4>If your <span style="color:var(--rx)">Rx</span> needs change <span style="font-weight:400;color:var(--muted)">(medical held where you set it)</span></h4><div id="chartRx"></div></div>
+    </div>
+    <div class="hint">Select plan names above to show or hide them. The dashed line shows where each slider is right now.</div>
+  </section>
+
+  <section class="panel">
+    <details class="how">
+      <summary>How this estimate works (assumptions)</summary>
+      <ul>
+        <li><b>Net cost = annual employee premium (or minus the HSA deposit) + estimated out-of-pocket costs.</b> Premiums are the “Caps Adjusted EE Contributions – Annual” amounts from the WMHIP 1/1/2027 illustration.</li>
+        <li><b>Negative amounts are HSA dollars.</b> When the District’s cap exceeds the premium (a negative amount in the illustration), those dollars go into the employee’s HSA. They are shown as a negative premium and reduce the net cost. If the net total is negative, that is the HSA balance left over after your estimated costs. HSA dollars can only be used for qualified medical expenses.</li>
+        <li>The <b>medical slider</b> drives office visits, online visits, urgent care, ER and hospital / procedure charges. The <b>Rx slider</b> drives generic, preferred brand, non-preferred brand and preferred specialty fills. Preventive care is covered at 100% on every plan and is not counted.</li>
+        <li>Costs are worked through in order across the year: <b>copays</b> where a plan has them, <b>deductible</b> until it’s met, then <b>coinsurance</b> on the 80% plans (175/176 and Enhanced HSA 3500; you pay 20% up to the plan’s coinsurance maximum), all stopping at the <b>out-of-pocket maximum</b>. On every other plan the plan pays 100% of covered medical care after the deductible. Medical and Rx share one deductible and one out-of-pocket maximum.</li>
+        <li><b>Embedded deductible</b> (Value HSA 6350): each person has their own deductible and out-of-pocket max, with a family limit. <b>Aggregate deductible</b> (all other plans): the whole family deductible must be met first. For Single coverage, individual amounts apply; for Two-Person and Full Family, family amounts apply. Value HSA 3000 also limits any one member to $6,350 within the family maximum.</li>
+        <li>Rx is subject to the deductible on every plan, so part of your Rx cost can be deductible dollars. When medical and Rx both count toward the same deductible, the split between the two follows the order care happens during the year.</li>
+        <li>Plans with “copay then 100% after deductible” (urgent care and ER on Enhanced 5000) are modeled as the copay plus the remaining charge going to the deductible. The ER copay is not waived for admissions, which is slightly conservative for Enhanced 5000.</li>
+        <li>Typical allowed charges used: primary care $150, specialist $250, online visit $75, urgent care $350, ER $2,000, generic Rx $25, preferred brand Rx $300, non-preferred brand Rx $450, preferred specialty Rx $3,000. Hospital / procedure charges rise with the medical slider.</li>
+        <li>Chiropractic, PT/OT/speech, private duty nursing, wisdom tooth extractions, massage therapy, non-preferred specialty drugs and out-of-network care are not modeled.</li>
+        <li>HSA tax savings are <b>not</b> included, and would lower the cost of the HSA plans further. The only HSA contribution counted is the District cap excess shown as a negative amount in the illustration.</li>
+      </ul>
+      <div class="scroll"><table class="ref" id="refTable"></table></div>
+    </details>
+    <p class="foot">This tool is an illustration only and is not a guarantee of actual costs. Actual costs depend on the care you use. Please refer to your plan summary and policy for full benefit details.</p>
+  </section>
+
+</div></main>
+
+<script>
+/* ===== Calculator engine (no DOM dependencies) ===== */
+
+const DED = { ded: true };
+const medAllDed = { pcp: DED, spec: DED, online: DED, ucFac: DED, ucPhys: DED, er: DED, major: DED };
+const rxPct = (npMax) => ({
+  generic: { copay: 10, afterDed: true },
+  prefBrand: { pct: 0.2, min: 0, max: 80, afterDed: true },
+  nonPrefBrand: { pct: 0.2, min: 0, max: npMax, afterDed: true },
+  prefSpec: { pct: 0.2, min: 0, max: 80, afterDed: true }
+});
+
+/* Premiums = "Caps Adjusted EE Contributions - Annual" from the WMHIP 1/1/2027 illustration.
+   Negative values are dollars deposited into the employee's HSA (District cap exceeds the premium).
+   They are kept negative and offset out-of-pocket costs in the net total. */
+const PLANS = [
+  { id: '121', name: 'Enhanced HSA 2000', code: '121/122', color: '#e08a1e',
+    indDed: 2000, famDed: 4000, embedded: false, indOop: 3000, famOop: 6000,
+    prem: { single: 1061.56, two: 3686.45, family: 3567.03 },
+    ben: { ...medAllDed, ...rxPct(100) } },
+
+  { id: 'PH01', name: 'Priority HSA 2500', code: 'PH01', color: '#c2386b',
+    indDed: 2500, famDed: 5000, embedded: false, indOop: 4500, famOop: 9000,
+    prem: { single: -213.83, two: 816.86, family: -4.02 },
+    ben: { ...medAllDed, ...rxPct(160) } },
+
+  { id: '210', name: 'Enhanced HSA 2500', code: '210/211', color: '#6b3fa0',
+    indDed: 2500, famDed: 5000, embedded: false, indOop: 3000, famOop: 6000,
+    prem: { single: 625.67, two: 2705.67, family: 2346.61 },
+    ben: { ...medAllDed, ...rxPct(100) } },
+
+  { id: '175', name: 'Enhanced HSA 2000 (80%)', code: '175/176', color: '#1fa38f',
+    indDed: 2000, famDed: 4000, embedded: false, indOop: 3000, famOop: 6000,
+    coinPct: 0.2, indCoin: 1000, famCoin: 2000,
+    prem: { single: 91.15, two: 1503.04, family: 849.93 },
+    ben: { ...medAllDed, ...rxPct(100) } },
+
+  { id: '3500', name: 'Enhanced HSA 3500', code: 'NEW', color: '#2f6fd0',
+    indDed: 3500, famDed: 7000, embedded: false, indOop: 5500, famOop: 11000,
+    coinPct: 0.2, indCoin: 2000, famCoin: 4000,
+    prem: { single: -292.99, two: 638.91, family: -225.51 },
+    ben: { ...medAllDed, ...rxPct(100) } },
+
+  { id: '186', name: 'Value HSA 3000', code: '186/187', color: '#d04a3a',
+    indDed: 3000, famDed: 6000, embedded: false, indOop: 6350, famOop: 12700, perMemberOop: 6350,
+    prem: { single: -16.36, two: 977.75, family: 548.72 },
+    ben: { ...medAllDed,
+      generic: { copay: 10, afterDed: true },
+      prefBrand: { copay: 40, afterDed: true }, nonPrefBrand: { copay: 80, afterDed: true }, prefSpec: { copay: 40, afterDed: true } } },
+
+  { id: 'PH03', name: 'Priority HSA 3000', code: 'PH03', color: '#8c4a2f',
+    indDed: 3000, famDed: 6000, embedded: false, indOop: 5000, famOop: 10000,
+    prem: { single: -479.77, two: 218.63, family: -748.49 },
+    ben: { ...medAllDed, ...rxPct(160) } },
+
+  { id: '157', name: 'Value HSA 6350', code: '157', color: '#4a5568',
+    indDed: 6350, famDed: 12700, embedded: true, indOop: 6350, famOop: 12700,
+    prem: { single: -1716.95, two: -2565.15, family: -4212.75 },
+    ben: { ...medAllDed,
+      generic: { full: true, afterDed: true }, prefBrand: { full: true, afterDed: true },
+      nonPrefBrand: { full: true, afterDed: true }, prefSpec: { full: true, afterDed: true } } },
+
+  { id: '201', name: 'Enhanced 5000', code: '201', color: '#17a2c4',
+    indDed: 5000, famDed: 10000, embedded: false, indOop: 6350, famOop: 12700,
+    prem: { single: -335.68, two: 542.86, family: -345.13 },
+    ben: {
+      pcp: DED, online: DED, spec: { copay: 30 },
+      ucFac: { copay: 30, ded: true }, ucPhys: { copay: 30, ded: true },
+      er: { copay: 150, ded: true }, major: DED,
+      generic: { copay: 10, afterDed: true },
+      prefBrand: { copay: 40, afterDed: true }, nonPrefBrand: { copay: 40, afterDed: true }, prefSpec: { copay: 40, afterDed: true } } }
+];
+
+const TIERS = {
+  single: { label: 'Single', size: 1 },
+  two: { label: 'Two-Person', size: 2 },
+  family: { label: 'Full Family', size: 4 }
+};
+
+// Typical allowed (contracted) charge for each service
+const ALLOWED = {
+  pcp: 150, spec: 250, online: 75, ucFac: 200, ucPhys: 150, er: 2000,
+  generic: 25, prefBrand: 300, nonPrefBrand: 450, prefSpec: 3000
+};
+const RX_TYPES = ['generic', 'prefBrand', 'nonPrefBrand', 'prefSpec'];
+
+// Per-person yearly usage at slider positions 0 / 25 / 50 / 75 / 100
+const ANCHORS = [0, 25, 50, 75, 100];
+const MED_PROFILE = {
+  pcp:    [0, 2, 4, 6, 10],
+  spec:   [0, 0, 2, 6, 12],
+  online: [0, 1, 1, 2, 2],
+  uc:     [0, 0, 1, 2, 3],
+  er:     [0, 0, 0, 1, 2],
+  major:  [0, 500, 3000, 15000, 60000]   // hospital / surgery / imaging / lab (allowed $)
+};
+const RX_PROFILE = {
+  generic:      [0, 6, 12, 24, 36],
+  prefBrand:    [0, 0, 2, 6, 12],
+  nonPrefBrand: [0, 0, 0, 3, 6],
+  prefSpec:     [0, 0, 0, 0, 12]
+};
+
+function interp(arr, s) {
+  for (let i = 0; i < ANCHORS.length - 1; i++) {
+    if (s <= ANCHORS[i + 1]) {
+      const f = (s - ANCHORS[i]) / (ANCHORS[i + 1] - ANCHORS[i]);
+      return arr[i] + (arr[i + 1] - arr[i]) * f;
+    }
+  }
+  return arr[arr.length - 1];
+}
+function profileAt(sMed, sRx) {
+  const o = {};
+  for (const k in MED_PROFILE) o[k] = interp(MED_PROFILE[k], sMed);
+  for (const k in RX_PROFILE) o[k] = interp(RX_PROFILE[k], sRx);
+  o.prefSpec = 12 * Math.max(0, (sRx - 80) / 20);   // specialty drugs only enter at the top of the Rx slider
+  return o;
+}
+
+const TYPE_ORDER = ['pcp', 'spec', 'online', 'ucFac', 'ucPhys', 'er', 'generic', 'prefBrand', 'nonPrefBrand', 'prefSpec', 'major'];
+
+function buildEvents(sMed, sRx, n, spread) {
+  const prof = profileAt(sMed, sRx);
+  const evs = [];
+  const counts = { visits: 0, rx: 0, major: 0, medAllowed: 0, rxAllowed: 0 };
+  const add = (p, type, count, allowed) => {
+    if (count < 1e-9) return;
+    const total = Math.ceil(count - 1e-9);
+    const full = Math.floor(count + 1e-9);
+    const frac = count - full;
+    for (let i = 0; i < total; i++) {
+      const w = i < full ? 1 : frac;
+      const t = (i + 0.5) / total + TYPE_ORDER.indexOf(type) * 1e-4 + p * 1e-5;
+      evs.push({ p, type, w, A: allowed * w, t });
+      if (RX_TYPES.includes(type)) counts.rxAllowed += allowed * w; else counts.medAllowed += allowed * w;
+    }
+  };
+  for (let p = 0; p < n; p++) {
+    const mult = spread === 'one' && n > 1 ? (p === 0 ? n : 0) : 1;
+    if (mult === 0) continue;
+    add(p, 'pcp', prof.pcp * mult, ALLOWED.pcp);
+    add(p, 'spec', prof.spec * mult, ALLOWED.spec);
+    add(p, 'online', prof.online * mult, ALLOWED.online);
+    add(p, 'ucFac', prof.uc * mult, ALLOWED.ucFac);
+    add(p, 'ucPhys', prof.uc * mult, ALLOWED.ucPhys);
+    add(p, 'er', prof.er * mult, ALLOWED.er);
+    add(p, 'generic', prof.generic * mult, ALLOWED.generic);
+    add(p, 'prefBrand', prof.prefBrand * mult, ALLOWED.prefBrand);
+    add(p, 'nonPrefBrand', prof.nonPrefBrand * mult, ALLOWED.nonPrefBrand);
+    add(p, 'prefSpec', prof.prefSpec * mult, ALLOWED.prefSpec);
+    if (prof.major * mult > 1e-6) add(p, 'major', 4, (prof.major * mult) / 4);
+    counts.visits += (prof.pcp + prof.spec + prof.online + prof.uc + prof.er) * mult;
+    counts.rx += (prof.generic + prof.prefBrand + prof.nonPrefBrand + prof.prefSpec) * mult;
+    counts.major += prof.major * mult;
+  }
+  evs.sort((a, b) => a.t - b.t);
+  return { evs, counts };
+}
+
+function simulate(plan, tierKey, sMed, sRx, spread) {
+  const n = TIERS[tierKey].size;
+  const multi = n > 1;
+  const { evs, counts } = buildEvents(sMed, sRx, n, spread);
+  const pDed = new Array(n).fill(0), pOop = new Array(n).fill(0), pCoin = new Array(n).fill(0);
+  let fDed = 0, fOop = 0, fCoin = 0;
+  const cat = { ded: 0, copay: 0, coin: 0, rx: 0 };
+
+  const dedRoom = p => {
+    if (!multi) return plan.indDed - pDed[p];
+    if (plan.embedded) return Math.min(plan.indDed - pDed[p], plan.famDed - fDed);
+    return plan.famDed - fDed;
+  };
+  const oopRoom = p => {
+    if (!multi) return plan.indOop - pOop[p];
+    if (plan.embedded) return Math.min(plan.indOop - pOop[p], plan.famOop - fOop);
+    if (plan.perMemberOop) return Math.min(plan.perMemberOop - pOop[p], plan.famOop - fOop);
+    return plan.famOop - fOop;
+  };
+  const coinRoom = p => {
+    if (!plan.coinPct) return 0;
+    if (!multi) return plan.indCoin - pCoin[p];
+    if (plan.embedded) return Math.min(plan.indCoin - pCoin[p], plan.famCoin - fCoin);
+    return plan.famCoin - fCoin;
+  };
+
+  for (const e of evs) {
+    const b = plan.ben[e.type];
+    let dedApplied = 0, cDed = 0, cCopay = 0, cCoin = 0, cRx = 0;
+    if (RX_TYPES.includes(e.type)) {
+      let rest = e.A;
+      if (b.afterDed) {
+        dedApplied = Math.min(e.A, Math.max(0, dedRoom(e.p)));
+        rest = e.A - dedApplied;
+      }
+      let share = 0;
+      if (rest > 1e-9 && !b.full) {
+        if (b.copay !== undefined) share = Math.min(rest, b.copay * e.w);
+        else share = Math.min(rest, Math.min(Math.max(b.pct * rest, b.min * e.w), b.max * e.w));
+      }
+      cRx = dedApplied + share;
+    } else {
+      if (b.copay !== undefined) cCopay = Math.min(e.A, b.copay * e.w);
+      const rest = e.A - cCopay;
+      if (b.ded && rest > 1e-9) {
+        dedApplied = Math.min(rest, Math.max(0, dedRoom(e.p)));
+        cDed = dedApplied;
+        const r2 = rest - dedApplied;
+        if (plan.coinPct && r2 > 1e-9) cCoin = Math.min(plan.coinPct * r2, Math.max(0, coinRoom(e.p)));
+      }
+    }
+    let cost = cDed + cCopay + cCoin + cRx;
+    const room = Math.max(0, oopRoom(e.p));
+    if (cost > room) {
+      const k = cost > 0 ? room / cost : 0;
+      cDed *= k; cCopay *= k; cCoin *= k; cRx *= k; cost = room;
+    }
+    pDed[e.p] += dedApplied; fDed += dedApplied;
+    pCoin[e.p] += cCoin; fCoin += cCoin;
+    pOop[e.p] += cost; fOop += cost;
+    cat.ded += cDed; cat.copay += cCopay; cat.coin += cCoin; cat.rx += cRx;
+  }
+
+  const premium = plan.prem[tierKey];            // negative = HSA deposit
+  const hsaDeposit = Math.max(0, -premium);
+  const hsaUsed = Math.min(hsaDeposit, fOop);    // deposit dollars applied to out-of-pocket costs
+  const hsaLeft = hsaDeposit - hsaUsed;          // deposit dollars left over in the HSA
+  const dedTotal = multi ? plan.famDed : plan.indDed;
+  const oopMax = multi ? plan.famOop : plan.indOop;
+  return {
+    plan, premium, hsaDeposit, hsaUsed, hsaLeft, oop: fOop, total: premium + fOop,
+    worst: premium + oopMax, oopMax, dedTotal, dedMet: Math.min(fDed, dedTotal),
+    cat, medOop: cat.ded + cat.copay + cat.coin, rxOop: cat.rx, counts,
+    oopReached: fOop >= oopMax - 0.5
+  };
+}
+
+if (typeof module !== 'undefined') module.exports = { PLANS, TIERS, simulate, profileAt, buildEvents };
+
+
+/* ===== UI ===== */
+const $ = id => document.getElementById(id);
+const fmt = v => (Math.round(v) < 0 ? '−$' : '$') + Math.abs(Math.round(v)).toLocaleString('en-US');
+const MED_LEVELS = [
+  [12, 'Checkups only', 'Healthy year: preventive care, maybe a quick online visit.'],
+  [37, 'Light', 'A couple of office visits and an occasional online or urgent care visit.'],
+  [62, 'Moderate', 'Regular visits, a specialist, some tests or a minor procedure.'],
+  [87, 'Heavy', 'Frequent care, urgent care / ER and a surgery or hospital stay.'],
+  [101,'Major / chronic', 'A very high-use year: multiple procedures or a major hospital stay.']
+];
+const RX_LEVELS = [
+  [12, 'No prescriptions', 'No regular medications this year.'],
+  [37, 'Light', 'A few routine generic prescriptions.'],
+  [62, 'Moderate', 'Ongoing generics plus an occasional preferred brand-name drug.'],
+  [87, 'Heavy', 'Several maintenance medications, including brand-name drugs.'],
+  [101,'Specialty / chronic', 'Multiple brand drugs plus a monthly specialty medication.']
+];
+const levelFor = (L, s) => L.find(l => s < l[0]);
+const openPlans = new Set();
+const visible = new Set(PLANS.map(p => p.id));
+
+function renderUsage(r, n){
+  const per = n > 1 ? ' (household)' : '';
+  $('usageMed').innerHTML =
+    `<span class="chip">Visits${per}: <b>${Math.round(r.counts.visits)}</b></span>` +
+    `<span class="chip">Hospital / procedures: <b>${fmt(r.counts.major)}</b></span>` +
+    `<span class="chip">Total billed: <b>${fmt(r.counts.medAllowed)}</b></span>`;
+  $('usageRx').innerHTML =
+    `<span class="chip">Fills${per}: <b>${Math.round(r.counts.rx)}</b></span>` +
+    `<span class="chip">Total billed: <b>${fmt(r.counts.rxAllowed)}</b></span>`;
+}
+
+function planRow(r, rank, best, tierKey, scale){
+  const p = r.plan, multi = TIERS[tierKey].size > 1;
+  const w = v => (Math.max(0, v) / scale * 100).toFixed(2);
+  const hsa = r.hsaDeposit > 0;
+  const dedPct = r.dedTotal ? (r.dedMet / r.dedTotal * 100) : 0;
+  const oopPct = r.oopMax ? Math.min(100, r.oop / r.oopMax * 100) : 0;
+  const dedTxt = multi ? `${fmt(p.famDed)} family${p.embedded ? ' (embedded, ' + fmt(p.indDed) + ' per person)' : ' (aggregate)'}` : fmt(p.indDed);
+  const oopTxt = multi ? `${fmt(p.famOop)} family${p.embedded ? ' (' + fmt(p.indOop) + ' per person)' : (p.perMemberOop ? ' (' + fmt(p.perMemberOop) + ' per member)' : '')}` : fmt(p.indOop);
+  const coinTxt = p.coinPct ? `You pay ${Math.round(p.coinPct*100)}% after deductible, up to ${fmt(multi ? p.famCoin : p.indCoin)} coinsurance max` : 'Plan pays 100% after deductible';
+  const meta = `${p.code} · ${fmt(multi ? p.famDed : p.indDed)} deductible · ${fmt(multi ? p.famOop : p.indOop)} OOP max`;
+  return `
+  <details class="plan ${best ? 'best' : ''}" data-id="${p.id}" ${openPlans.has(p.id) ? 'open' : ''}>
+    <summary>
+      <div class="rank">${rank}</div>
+      <div>
+        <div class="pname"><span class="dot" style="background:${p.color}"></span>${p.name}${best ? '<span class="tag">Lowest cost</span>' : ''}</div>
+        <div class="pmeta">${meta}</div>
+        <div class="caret"></div>
+      </div>
+      <div class="barcol">
+        <div class="bar"><i class="p" style="width:${w(r.premium)}%"></i><i class="m" style="width:${w(r.cat.ded + r.cat.copay)}%"></i><i class="c" style="width:${w(r.cat.coin)}%"></i><i class="r" style="width:${w(r.rxOop)}%"></i></div>
+        ${hsa ? `<div class="bar hsabar"><i class="h" style="width:${w(r.hsaDeposit)}%"></i></div>` : ''}
+        <div class="barnote">${hsa ? `HSA deposit ${fmt(r.premium)} + out-of-pocket ${fmt(r.oop)}` : `Premium ${fmt(r.premium)} + out-of-pocket ${fmt(r.oop)}`}</div>
+      </div>
+      <div class="tot"><b class="${r.total < 0 ? 'neg' : ''}">${fmt(r.total)}</b><span>${r.total < 0 ? 'left in your HSA' : '≈ ' + fmt(r.total/12) + ' / month'}</span></div>
+    </summary>
+    <div class="detail">
+      <div>
+        <div class="row"><span class="k"><span class="sw" style="background:${hsa ? 'var(--hsa)' : 'var(--purple)'}"></span>${hsa ? 'Premium (negative = HSA deposit)' : 'Premium (your share)'}</span><b class="${hsa ? 'neg' : ''}">${fmt(r.premium)}</b></div>
+        <div class="row sub"><span class="k">${fmt(r.premium/12)} per month</span><span></span></div>
+        <div class="row"><span class="k"><span class="sw" style="background:var(--teal)"></span>Medical out-of-pocket</span><b>${fmt(r.medOop)}</b></div>
+        <div class="row sub"><span class="k">Deductible</span><span>${fmt(r.cat.ded)}</span></div>
+        <div class="row sub"><span class="k">Visit / ER copays</span><span>${fmt(r.cat.copay)}</span></div>
+        <div class="row sub"><span class="k">Coinsurance</span><span>${fmt(r.cat.coin)}</span></div>
+        <div class="row"><span class="k"><span class="sw" style="background:var(--rx)"></span>Rx out-of-pocket</span><b>${fmt(r.rxOop)}</b></div>
+        <div class="row" style="border-top:1px solid var(--line);margin-top:4px;padding-top:6px"><span class="k">Total out-of-pocket</span><b>${fmt(r.oop)}</b></div>
+        <div class="row"><span class="k">${r.total < 0 ? 'Net: HSA dollars left over' : 'Net cost for the year'}</span><b class="${r.total < 0 ? 'neg' : ''}">${fmt(r.total)}</b></div>
+        ${hsa ? `<div class="flag cap">The District cap exceeds this premium, so <b>${fmt(r.hsaDeposit)}</b> a year (${fmt(r.hsaDeposit/12)} / month) goes into your HSA. At this level of care, <b>${fmt(r.hsaUsed)}</b> of it covers out-of-pocket costs${r.hsaLeft > 0 ? ` and <b>${fmt(r.hsaLeft)}</b> stays in your HSA` : ''}.</div>` : ''}
+      </div>
+      <div>
+        <div class="progress"><div class="lbl"><span>Deductible met</span><span>${fmt(r.dedMet)} of ${fmt(r.dedTotal)}</span></div><div class="tr"><i style="width:${dedPct}%"></i></div></div>
+        <div class="progress"><div class="lbl"><span>Out-of-pocket max used</span><span>${fmt(r.oop)} of ${fmt(r.oopMax)}</span></div><div class="tr"><i style="width:${oopPct}%"></i></div></div>
+        ${r.oopReached ? '<div class="flag">You reach the out-of-pocket maximum — covered costs are $0 after that.</div>' : ''}
+        <div class="rules" style="margin-top:8px">
+          <div>Deductible: ${dedTxt}</div>
+          <div>Out-of-pocket max: ${oopTxt}</div>
+          <div>${coinTxt}</div>
+          <div>Worst case (premium + out-of-pocket max): <b>${fmt(r.worst)}</b></div>
+        </div>
+      </div>
+    </div>
+  </details>`;
+}
+
+function renderChips(){
+  $('chips').innerHTML = PLANS.map(p => `<button type="button" class="pchip ${visible.has(p.id) ? '' : 'off'}" data-id="${p.id}" aria-pressed="${visible.has(p.id)}"><i style="background:${p.color}"></i>${p.name} (${p.code})</button>`).join('') +
+    `<button type="button" class="linkbtn" data-all="1">Show all</button><button type="button" class="linkbtn" data-none="1">Hide all</button>`;
+}
+
+function renderChart(target, vary, tierKey, spread, sMed, sRx){
+  const W = 560, H = 300, L = 62, R = 14, T = 14, B = 44;
+  const cur = vary === 'med' ? sMed : sRx;
+  const plans = PLANS.filter(p => visible.has(p.id));
+  if (!plans.length) { $(target).innerHTML = '<div class="hint" style="padding:60px 0;text-align:center">Select at least one plan to see the chart.</div>'; return; }
+  const xs = []; for (let x = 0; x <= 100; x += 2) xs.push(x);
+  const run = (p, x) => vary === 'med' ? simulate(p, tierKey, x, sRx, spread).total : simulate(p, tierKey, sMed, x, spread).total;
+  const series = plans.map(p => xs.map(x => run(p, x)));
+  const maxV = Math.max(...series.flat(), 1000), minV = Math.min(...series.flat(), 0);
+  const raw = (maxV - minV) / 5, mag = Math.pow(10, Math.floor(Math.log10(raw))), nn = raw / mag;
+  const step = (nn <= 1 ? 1 : nn <= 2 ? 2 : nn <= 2.5 ? 2.5 : nn <= 5 ? 5 : 10) * mag;
+  const yMax = Math.ceil(maxV / step) * step, yMin = Math.floor(minV / step) * step;
+  const X = v => L + (v / 100) * (W - L - R);
+  const Y = v => T + (1 - (v - yMin) / (yMax - yMin)) * (H - T - B);
+  let g = '';
+  for (let v = yMin; v <= yMax + 1; v += step) {
+    g += `<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="${v === 0 && yMin < 0 ? '#9a97b0' : '#e4e1ef'}"/><text x="${L-8}" y="${Y(v)+4}" text-anchor="end" font-size="12" fill="#6a6783">${fmt(v)}</text>`;
+  }
+  const labels = vary === 'med'
+    ? [[0,'Checkups'],[25,'Light'],[50,'Moderate'],[75,'Heavy'],[100,'Major']]
+    : [[0,'None'],[25,'Light'],[50,'Moderate'],[75,'Heavy'],[100,'Specialty']];
+  labels.forEach(([v,t]) => {
+    const anchor = v === 0 ? 'start' : v === 100 ? 'end' : 'middle';
+    g += `<line x1="${X(v)}" x2="${X(v)}" y1="${H-B}" y2="${H-B+5}" stroke="#9a97b0"/><text x="${X(v)}" y="${H-B+20}" text-anchor="${anchor}" font-size="12" fill="#6a6783">${t}</text>`;
+  });
+  g += `<text x="${(L+W-R)/2}" y="${H-3}" text-anchor="middle" font-size="12" fill="#6a6783">${vary === 'med' ? 'Expected medical needs →' : 'Expected Rx needs →'}</text>`;
+  plans.forEach((p, i) => {
+    const pts = xs.map((x, j) => `${X(x).toFixed(1)},${Y(series[i][j]).toFixed(1)}`).join(' ');
+    g += `<polyline points="${pts}" fill="none" stroke="${p.color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  });
+  g += `<line x1="${X(cur)}" x2="${X(cur)}" y1="${T}" y2="${H-B}" stroke="${vary === 'med' ? '#4b2a84' : '#d9731f'}" stroke-width="2" stroke-dasharray="5 4"/>`;
+  plans.forEach(p => {
+    g += `<circle cx="${X(cur)}" cy="${Y(run(p, cur))}" r="5" fill="#fff" stroke="${p.color}" stroke-width="3"/>`;
+  });
+  $(target).innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Net annual cost of each selected plan as ${vary === 'med' ? 'medical' : 'prescription'} needs change">${g}</svg>`;
+}
+
+function update(){
+  const tierKey = $('tier').value, sMed = +$('needMed').value, sRx = +$('needRx').value, spread = $('spread').value;
+  const n = TIERS[tierKey].size;
+  $('spreadBox').style.display = n > 1 ? 'block' : 'none';
+  const lm = levelFor(MED_LEVELS, sMed), lr = levelFor(RX_LEVELS, sRx);
+  $('medName').textContent = lm[1]; $('medDesc').textContent = lm[2];
+  $('rxName').textContent = lr[1];  $('rxDesc').textContent = lr[2];
+  const results = PLANS.map(p => simulate(p, tierKey, sMed, sRx, spread));
+  renderUsage(results[0], n);
+  const sorted = results.slice().sort((a, b) => a.total - b.total || a.worst - b.worst);
+  const best = sorted[0], worstR = sorted[sorted.length - 1];
+  $('summary').innerHTML = `For <b>${TIERS[tierKey].label}</b> coverage with <b>${lm[1].toLowerCase()}</b> medical care and <b>${lr[1].toLowerCase()}</b> Rx, <b>${best.plan.name} (${best.plan.code})</b> has the lowest estimated net cost at <b>${fmt(best.total)}</b> a year${best.total < 0 ? ' (HSA dollars left over after your costs)' : ''}, ${fmt(worstR.total - best.total)} less than the highest-cost plan.`;
+  const scale = Math.max(...results.map(r => Math.max(0, r.premium) + r.oopMax), ...results.map(r => r.hsaDeposit), 1);
+  $('plans').innerHTML = sorted.map((r, i) => planRow(r, i + 1, i === 0, tierKey, scale)).join('');
+  renderChart('chartMed', 'med', tierKey, spread, sMed, sRx);
+  renderChart('chartRx', 'rx', tierKey, spread, sMed, sRx);
+}
+
+$('plans').addEventListener('toggle', e => {
+  const d = e.target; if (!d.dataset || !d.dataset.id) return;
+  d.open ? openPlans.add(d.dataset.id) : openPlans.delete(d.dataset.id);
+}, true);
+$('chips').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.all) PLANS.forEach(p => visible.add(p.id));
+  else if (b.dataset.none) visible.clear();
+  else if (b.dataset.id) visible.has(b.dataset.id) ? visible.delete(b.dataset.id) : visible.add(b.dataset.id);
+  renderChips(); update();
+});
+$('refTable').innerHTML = '<tr><th>Plan</th><th>Deductible (ind / fam)</th><th>Type</th><th>Coinsurance (you pay)</th><th>Out-of-pocket max (ind / fam)</th></tr>' +
+  PLANS.map(p => `<tr><td>${p.name} (${p.code})</td><td>${fmt(p.indDed)} / ${fmt(p.famDed)}</td><td>${p.embedded ? 'Embedded' : 'Aggregate'}</td><td>${p.coinPct ? Math.round(p.coinPct*100) + '% up to ' + fmt(p.indCoin) + ' / ' + fmt(p.famCoin) : '0% (plan pays 100%)'}</td><td>${fmt(p.indOop)} / ${fmt(p.famOop)}</td></tr>`).join('');
+['tier','needMed','needRx','spread'].forEach(id => $(id).addEventListener('input', update));
+renderChips();
+update();
+</script>
+</body>
+</html>
